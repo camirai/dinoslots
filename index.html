@@ -19,11 +19,14 @@
         <h1>DinoSlots™</h1>
         <p class="subtitle">Ministerio Jurásico de la Felicidad</p>
         <div class="scan-box">
-          <p>⚠ ESCANEANDO ESTADO DE ÁNIMO...</p>
-          <div class="scan-line"></div>
-          <p id="scanResult" class="scan-result">Resultado: necesita mimitos urgentemente.</p>
+          <p class="scan-label">⚠ ANÁLISIS DE ÁNIMO REQUERIDO</p>
+          <button id="diagBtn" class="diag-btn">DIAGNOSTICAR ESTADO DE ÁNIMO</button>
+          <div id="diagResult" class="diag-result hidden">
+            <div class="diag-bar-track"><div id="diagBar" class="diag-bar-fill"></div></div>
+            <p id="scanResult" class="scan-result"></p>
+          </div>
         </div>
-        <button id="startBtn" class="primary-btn">COMENZAR</button>
+        <button id="startBtn" class="primary-btn hidden">COMENZAR TRATAMIENTO</button>
       </div>
     </section>
 
@@ -36,11 +39,11 @@
         <p>Hoy recibimos una solicitud muy especial presentada por una humana llamada <strong>Cami</strong>.</p>
         <div class="request-box">
           <span>Motivo:</span>
-          <strong>“Hacer sonreír a mi novia porque está teniendo días difíciles.”</strong>
+          <strong>"Hacer sonreír a mi novia porque está teniendo un día difícil."</strong>
         </div>
         <p>La solicitud fue aprobada por unanimidad.</p>
         <p class="unlimited">🎰 GIROS ILIMITADOS</p>
-        <button id="enterCasinoBtn" class="primary-btn">ENTRAR AL CASINO</button>
+        <button id="enterCasinoBtn" class="primary-btn pulse-btn">ENTRAR AL CASINO</button>
       </div>
     </section>
 
@@ -56,7 +59,11 @@
 
         <div class="machine-wrap">
           <div class="machine">
-            <div class="machine-top">🦖 PREMIOS PARA PAU 🦖</div>
+            <div class="machine-top">
+              <span class="machine-lights"></span>
+              🦖 PREMIOS PARA PAU 🦖
+              <span class="machine-lights"></span>
+            </div>
 
             <div class="status-panel" id="statusPanel">
               <span id="systemMessage">Bajá la palanca para recibir un premio.</span>
@@ -79,7 +86,7 @@
               <button id="leverKnob" class="lever-knob" aria-label="Bajar palanca"></button>
               <div class="lever-stick"></div>
             </div>
-            <p>BAJÁ LA PALANCA</p>
+            <p>BAJÁ LA<br>PALANCA</p>
           </div>
         </div>
 
