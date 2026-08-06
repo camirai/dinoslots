@@ -4,7 +4,6 @@ const screens = {
   game: document.getElementById("gameScreen"),
 };
 
-/* ========== SYMBOLS & MATCHES ========== */
 const symbols = ["🦕","🦖","🥚","🦴","🌋","❤️","🍰","🎟️","🥦","🐈","🐈‍⬛"];
 
 const systemMessages = [
@@ -21,67 +20,57 @@ const systemMessages = [
 ];
 
 /* ========== PRIZE POOLS ========== */
-// No-match prizes (when all 3 are different) — big variety pool
 const noMatchPrizes = [
-  { title:"CONSUELO JURÁSICO", icon:"🦕", rarity:"common", coins:5,
+  { title:"CONSUELO JURÁSICO", icon:"🦕", rarity:"common",
     body:`<p>No hubo match, pero el dino gerente te envía:</p><p class="big-love">Una caricia virtual 💛</p><p>Intentá de nuevo, esta máquina es generosa.</p>` },
-  { title:"MENSAJE INTERCEPTADO", icon:"📡", rarity:"common", coins:8,
+  { title:"MENSAJE INTERCEPTADO", icon:"📡", rarity:"common",
     body:`<p>Se interceptó una transmisión del Período Jurásico:</p><p class="big-love">"Decile a la humana que la quiero mucho."</p><p>— Firmado: un velociraptor anónimo 🦖</p>` },
-  { title:"CUPÓN DE EMERGENCIA", icon:"🆘", rarity:"common", coins:5,
+  { title:"CUPÓN DE EMERGENCIA", icon:"🆘", rarity:"common",
     body:`<p>Válido por:</p><p>🫂 Un abrazo de emergencia<br>🛋️ 10 minutos de no hacer nada juntas<br>☕ Un café hecho con amor</p>` },
-  { title:"DATO CURIOSO", icon:"🧠", rarity:"common", coins:10,
+  { title:"DATO CURIOSO", icon:"🧠", rarity:"common",
     body:`<p><strong>¿Sabías que...</strong></p><p>Los dinosaurios existieron durante 165 millones de años.</p><p>Pero el amor de Cami por vos se siente como si fuera desde antes del Big Bang. 💥❤️</p>` },
-  { title:"NOTICIA DE ÚLTIMO MOMENTO", icon:"📰", rarity:"common", coins:5,
+  { title:"NOTICIA DE ÚLTIMO MOMENTO", icon:"📰", rarity:"common",
     body:`<p><strong>BREAKING NEWS</strong></p><p>Se confirma que Paula es oficialmente la persona más linda que existe.</p><p class="big-love">Fuente: Cami, 2026.</p>` },
-  { title:"HORÓSCOPO JURÁSICO", icon:"🔮", rarity:"common", coins:8,
-    body:`<p><strong>Tu horóscopo de hoy:</strong></p><p>⭐ Amor: nivel máximo (gracias a Cami).<br>⭐ Suerte: altísima (llegaste a esta pantalla).<br>⭐ Energía: se recarga con cada giro. 🦖</p>` },
-  { title:"DELIVERY PREHISTÓRICO", icon:"📦", rarity:"common", coins:5,
+  { title:"DELIVERY PREHISTÓRICO", icon:"📦", rarity:"common",
     body:`<p>Tu pedido ha sido despachado:</p><p>📦 1 cajita de mimos<br>📦 1 paquete de besitos<br>📦 1 dosis de "te amo"</p><p><strong>Estado:</strong> en camino a tus brazos. 💛</p>` },
-  { title:"ALERTA METEOROLÓGICA", icon:"🌤️", rarity:"common", coins:10,
+  { title:"ALERTA METEOROLÓGICA", icon:"🌤️", rarity:"common",
     body:`<p><strong>Pronóstico para hoy:</strong></p><p>☁️ Nublado al principio...<br>🌤️ ...pero con muchas posibilidades de sonrisas por la tarde.<br>💛 100% de probabilidad de amor.</p>` },
-  { title:"MEMO INTERNO", icon:"📋", rarity:"common", coins:5,
+  { title:"MEMO INTERNO", icon:"📋", rarity:"common",
     body:`<p><strong>De:</strong> Departamento de Cariño<br><strong>Para:</strong> Paula<br><strong>Asunto:</strong> Recordatorio</p><p class="big-love">Sos increíble incluso en los días difíciles. ❤️</p>` },
-  { title:"WIFI JURÁSICO", icon:"📶", rarity:"common", coins:8,
+  { title:"WIFI JURÁSICO", icon:"📶", rarity:"common",
     body:`<p>Conexión establecida con:</p><p class="big-love">Red: "TeAmoMucho_5G" 📶</p><p>Señal: MÁXIMA<br>Velocidad: infinita<br>Contraseña: no hace falta, es amor libre. 💛</p>` },
 ];
 
-// 2-match prizes (two symbols match)
 const twoMatchPrizes = [
-  { title:"¡¡JACKPOT!!", icon:"💋", rarity:"rare", coins:25,
+  { title:"¡¡JACKPOT!!", icon:"💋", rarity:"rare",
     body:`<p>Ganaste un...</p><p class="big-love">BESO PREMIUM</p><p>Incluye:</p><p>✔ 1 beso largo<br>✔ 3 besitos sorpresa<br>✔ Repeticiones ilimitadas</p>` },
-  { title:"FELICIDADES", icon:"🍰", rarity:"rare", coins:20,
+  { title:"FELICIDADES", icon:"🍰", rarity:"rare",
     body:`<p>Ganaste un vale por:</p><p class="big-love">Elegir el próximo postre.</p><p><em>La administración se reserva el derecho a probar un poquito.</em></p>` },
-  { title:"NOTIFICACIÓN DEL NIDITO", icon:"❤️🐈🐈‍⬛", rarity:"rare", coins:25,
+  { title:"NOTIFICACIÓN DEL NIDITO", icon:"❤️🐈🐈‍⬛", rarity:"rare",
     body:`<p>Se detectó movimiento.</p><p><strong>Pispo 🐈 y Chappell 🐈‍⬛ ya ocuparon sus puestos estratégicos.</strong></p><p>Objetivo:</p><p class="big-love">Recibir a mamá con besitos, ronroneos y muchísimo amor. ❤️</p>` },
-  { title:"VALE OFICIAL", icon:"🎟️", rarity:"rare", coins:20,
+  { title:"VALE OFICIAL", icon:"🎟️", rarity:"rare",
     body:`<p>Canjeable por:</p><p>🍦 Un helado<br>🎬 Elegir la próxima película<br>🫂 Un abrazo gigante</p><p><strong>Vencimiento:</strong> Nunca.</p>` },
-  { title:"DINO TERAPEUTA", icon:"🦕🩺", rarity:"rare", coins:25,
+  { title:"DINO TERAPEUTA", icon:"🦕🩺", rarity:"rare",
     body:`<p><strong>Diagnóstico:</strong></p><p>Nivel de cansancio:</p><p class="meter">██████████ 98%</p><p>Tratamiento recomendado:</p><p>✔ Comer algo rico<br>✔ Descansar<br>✔ Hablar con Cami</p><p><strong>Pronóstico:</strong> Excelente ❤️</p>` },
-  { title:"NOCHE DE PELIS", icon:"🎬🍿", rarity:"rare", coins:30,
+  { title:"NOCHE DE PELIS", icon:"🎬🍿", rarity:"rare",
     body:`<p>El Casino Jurásico te otorga:</p><p class="big-love">NOCHE DE PELIS OBLIGATORIA</p><p>✔ Vos elegís la peli<br>✔ Pochoclo incluido<br>✔ Manta y acurrucarse: OBLIGATORIO</p>` },
-  { title:"PASEO MISTERIOSO", icon:"🗺️", rarity:"rare", coins:25,
+  { title:"PASEO MISTERIOSO", icon:"🗺️", rarity:"rare",
     body:`<p>Desbloqueaste:</p><p class="big-love">Un paseo sorpresa juntas</p><p>El destino lo elige Cami.<br>Dresscode: cómoda y linda (como siempre). 🦖💛</p>` },
 ];
 
-// 3-match prizes (JACKPOT — all 3 match)
 const threeMatchPrizes = [
-  { title:"🏆 TRIPLE MATCH 🏆", icon:"🦖👑", rarity:"epic", coins:50,
+  { title:"🏆 TRIPLE MATCH 🏆", icon:"🦖👑", rarity:"epic",
     body:`<p>¡¡¡TRES IGUALES!!!</p><p class="big-love">CENA SORPRESA</p><p>Cami se encarga de TODO:<br>✔ Elegir el lugar<br>✔ Reservar<br>✔ Hacerte sentir la persona más especial del mundo</p>` },
-  { title:"🏆 MEGA JACKPOT 🏆", icon:"💎", rarity:"epic", coins:50,
+  { title:"🏆 MEGA JACKPOT 🏆", icon:"💎", rarity:"epic",
     body:`<p>¡¡¡TRIPLE!!!</p><p class="big-love">DÍA COMPLETO DE MIMOS</p><p>Un día entero donde Cami hace todo lo que vos quieras.<br>Sin excusas. Sin límites.<br>Solo amor. 💛🦖</p>` },
-  { title:"🏆 SUPREMO 🏆", icon:"🌟", rarity:"epic", coins:50,
+  { title:"🏆 SUPREMO 🏆", icon:"🌟", rarity:"epic",
     body:`<p>El premio más raro de la máquina:</p><p class="big-love">CARTA DE AMOR ESCRITA A MANO</p><p>Cami va a sentarse y escribirte una carta de verdad, en papel, con toda la cursilería del mundo. 💌</p>` },
 ];
 
-// Legendary (special trigger)
-const legendaryPrize = {
-  title:"⭐ PREMIO LEGENDARIO ⭐", icon:"🦖🏆", rarity:"legendary", coins:100,
-  body:`<p>El Consejo Supremo de los Dinosaurios decidió entregarte el premio más raro que existe.</p>
-    <p><strong>Tu misión para hoy:</strong></p>
-    <p>✔ Sobrevivir al día.<br>✔ Después dejarte querer muchísimo por Cami.</p>
-    <p class="big-love">Sos lo mejor que me pasó. 🦖❤️</p>`
-};
-
+/* ========== COIN VALUES (fijos, siempre suben con matches) ========== */
+const COINS_NO_MATCH = 5;
+const COINS_TWO_MATCH = 15;
+const COINS_THREE_MATCH = 30;
 const RESPIN_COST = 30;
 
 let spinning = false;
@@ -95,6 +84,10 @@ let lastPrizeIndex = -1;
 let lastPool = null;
 let currentFinalSymbols = [];
 let canRespin = false;
+let pendingPrize = null;
+let pendingCoinReward = 0;
+let currentSpinCreditedCoins = 0;
+let resultRevealTimer = null;
 
 const diagBtn = document.getElementById("diagBtn");
 const diagResult = document.getElementById("diagResult");
@@ -116,6 +109,7 @@ const prizeBody = document.getElementById("prizeBody");
 const prizeRarity = document.getElementById("prizeRarity");
 const coinReward = document.getElementById("coinReward");
 const matchInfo = document.getElementById("matchInfo");
+const claimBtn = document.getElementById("claimBtn");
 const secretChest = document.getElementById("secretChest");
 const openChestBtn = document.getElementById("openChestBtn");
 const respinBtns = document.querySelectorAll(".respin-btn");
@@ -161,8 +155,7 @@ function countMatches(syms) {
 
 function pickFromPool(pool) {
   if (pool.length <= 1) return pool[0];
-  let idx;
-  let attempts = 0;
+  let idx, attempts = 0;
   do {
     idx = Math.floor(Math.random() * pool.length);
     attempts++;
@@ -175,7 +168,7 @@ function pickFromPool(pool) {
 function showStreak(n) {
   const el = document.createElement("div");
   el.className = "streak-banner";
-  el.textContent = n === 3 ? "🔥 ¡TRIPLE RACHA! BONUS x2 🔥" : `🔥 ¡RACHA DE ${n}! +${n*5} BONUS 🔥`;
+  el.textContent = `🔥 ¡RACHA DE ${n}! +${n * 3} BONUS 🔥`;
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 3200);
 }
@@ -193,16 +186,15 @@ respinBtns.forEach(btn => {
     updateCoins(-RESPIN_COST);
     canRespin = false;
     hideRespinBtns();
+    claimBtn.classList.add("hidden");
     matchInfo.classList.add("hidden");
 
     const reelEl = document.getElementById(`reel${reelIdx+1}`);
     reelEl.classList.add("spinning");
     systemMessage.textContent = "Re-girando...";
 
-    let spinCount = 0;
     const interval = setInterval(() => {
       reelEl.textContent = randomSymbol();
-      spinCount++;
     }, 80);
 
     setTimeout(() => {
@@ -214,8 +206,7 @@ respinBtns.forEach(btn => {
       reelEl.classList.add("landed");
       if (navigator.vibrate) navigator.vibrate(30);
 
-      // Evaluate new result
-      setTimeout(() => evaluateResult(currentFinalSymbols), 600);
+      setTimeout(() => evaluateResult(currentFinalSymbols, true), 600);
     }, 1000);
   });
 });
@@ -236,27 +227,41 @@ function hideRespinBtns() {
 }
 
 /* ========== EVALUATE RESULT ========== */
-function evaluateResult(syms) {
+function evaluateResult(syms, isRespin) {
   const matches = countMatches(syms);
   const reelBoxes = document.querySelectorAll(".reel");
 
-  // Determine coin reward for spin
-  let spinCoins;
-  if (matches === 3) spinCoins = 15 + Math.floor(Math.random() * 11); // 15-25
-  else if (matches === 2) spinCoins = 8 + Math.floor(Math.random() * 8); // 8-15
-  else spinCoins = 3 + Math.floor(Math.random() * 5); // 3-7
+  // Recompensa fija y ordenada: 3 iguales > 2 iguales > todos distintos.
+  let baseCoins;
+  if (matches === 3) baseCoins = COINS_THREE_MATCH;
+  else if (matches === 2) baseCoins = COINS_TWO_MATCH;
+  else baseCoins = COINS_NO_MATCH;
 
-  // Streak bonus
-  streak++;
+  // La racha se calcula una sola vez por tirada completa, no al re-girar.
   let bonusCoins = 0;
-  if (streak >= 3) {
-    bonusCoins = streak * 5;
-    showStreak(streak);
+  if (!isRespin) {
+    if (matches >= 2) {
+      streak++;
+      if (streak >= 3) {
+        bonusCoins = streak * 3;
+        showStreak(streak);
+      }
+    } else {
+      streak = 0;
+    }
   }
 
-  updateCoins(spinCoins + bonusCoins);
+  const totalForResult = baseCoins + bonusCoins;
 
-  // Highlight matching reels
+  // Evita contar dos veces al usar re-giro.
+  // Solo acredita la diferencia si el nuevo resultado mejora el premio.
+  const coinDelta = Math.max(0, totalForResult - currentSpinCreditedCoins);
+  if (coinDelta > 0) {
+    updateCoins(coinDelta);
+    currentSpinCreditedCoins += coinDelta;
+  }
+
+  // Resalta los slots que coinciden.
   reelBoxes.forEach(r => r.classList.remove("win-glow","match-glow"));
   if (matches === 3) {
     reelBoxes.forEach(r => r.classList.add("win-glow"));
@@ -266,68 +271,102 @@ function evaluateResult(syms) {
     if (syms[0]===syms[2]) { reelBoxes[0].classList.add("match-glow"); reelBoxes[2].classList.add("match-glow"); }
   }
 
-  // Show match info
-  if (matches === 3) {
-    matchInfo.textContent = "🎉 ¡¡¡TRIPLE MATCH!!! PREMIO ÉPICO 🎉";
-    matchInfo.classList.remove("hidden");
-  } else if (matches === 2) {
-    matchInfo.textContent = "✨ ¡Doble match! Premio especial ✨";
-    matchInfo.classList.remove("hidden");
-  } else {
-    matchInfo.textContent = "🎰 Premio de consuelo — ¡re-girá un slot por " + RESPIN_COST + "🪙!";
-    matchInfo.classList.remove("hidden");
-  }
-
-  // Shake + announce
-  document.querySelector(".machine").classList.add("shake");
-  setTimeout(() => document.querySelector(".machine").classList.remove("shake"), 450);
-  systemMessage.textContent = matches >= 2 ? "🎉 ¡¡¡PREMIO!!!" : "🎰 ¡Tenés premio!";
-  if (navigator.vibrate) navigator.vibrate(matches === 3 ? [60,40,90,40,120] : [60,40,90]);
-
-  // Choose prize based on matches
+  // El premio épico existe únicamente cuando los tres slots coinciden.
   let prize;
-  if (Math.random() < 0.03) {
-    prize = legendaryPrize;
-  } else if (matches === 3) {
+  if (matches === 3) {
     prize = pickFromPool(threeMatchPrizes);
   } else if (matches === 2) {
     prize = pickFromPool(twoMatchPrizes);
   } else {
     prize = pickFromPool(noMatchPrizes);
   }
-  prize._coinReward = spinCoins + bonusCoins;
 
-  // Show respin buttons for no-match (before showing prize)
-  if (matches === 0) {
-    showRespinBtns();
+  pendingPrize = prize;
+  pendingCoinReward = currentSpinCreditedCoins;
+
+  // Primero se deja el resultado visible para que Pau pueda mirar qué salió.
+  matchInfo.classList.add("hidden");
+  claimBtn.classList.add("hidden");
+  hideRespinBtns();
+
+  if (matches === 3) {
+    systemMessage.textContent = "🏆 ¡TRES IGUALES! PREMIO ÉPICO 🏆";
+  } else if (matches === 2) {
+    systemMessage.textContent = "✨ ¡DOS IGUALES! PREMIO ESPECIAL ✨";
+  } else {
+    systemMessage.textContent = "🎰 Resultado listo...";
   }
 
-  // Delay then show prize
-  const delay = matches === 3 ? 1800 : matches === 2 ? 1400 : 1200;
-  setTimeout(() => {
-    reelBoxes.forEach(r => r.classList.remove("win-glow","match-glow"));
-    hideRespinBtns();
-    matchInfo.classList.add("hidden");
-    showPrize(prize);
-  }, delay);
+  document.querySelector(".machine").classList.add("shake");
+  setTimeout(() => document.querySelector(".machine").classList.remove("shake"), 450);
+  if (navigator.vibrate) {
+    navigator.vibrate(matches === 3 ? [60,40,90,40,120] : [60,40,90]);
+  }
+
+  // Pausa deliberada antes de mostrar las opciones.
+  clearTimeout(resultRevealTimer);
+  resultRevealTimer = setTimeout(() => {
+    if (matches === 3) {
+      matchInfo.textContent = `🎉 ¡TRIPLE MATCH! Premio épico · +${currentSpinCreditedCoins} DinoCoins`;
+    } else if (matches === 2) {
+      matchInfo.textContent = `✨ ¡Doble match! Premio especial · +${currentSpinCreditedCoins} DinoCoins`;
+    } else {
+      matchInfo.textContent = coins >= RESPIN_COST
+        ? `🎰 Todos distintos · +${currentSpinCreditedCoins} DinoCoins. Podés re-girar un slot o ver tu premio.`
+        : `🎰 Todos distintos · +${currentSpinCreditedCoins} DinoCoins. Tu premio está listo.`;
+    }
+
+    matchInfo.classList.remove("hidden");
+
+    if (matches === 0) {
+      showRespinBtns();
+    }
+
+    claimBtn.classList.remove("hidden");
+    systemMessage.textContent = "Tomate tu tiempo: mirá el resultado y elegí qué hacer.";
+  }, 2600);
 
   if (spins === 5) secretChest.classList.remove("hidden");
   spinning = false;
 }
 
+/* ========== CLAIM PRIZE (manual) ========== */
+claimBtn.addEventListener("click", () => {
+  if (!pendingPrize) return;
+  hideRespinBtns();
+  claimBtn.classList.add("hidden");
+  matchInfo.classList.add("hidden");
+  document.querySelectorAll(".reel").forEach(r => r.classList.remove("win-glow","match-glow"));
+  showPrize(pendingPrize, pendingCoinReward);
+  pendingPrize = null;
+});
+
 /* ========== SPIN ========== */
 function startSpin() {
   if (spinning || modal.classList.contains("show")) return;
+  // If there's a pending prize, auto-claim it first
+  if (pendingPrize) {
+    hideRespinBtns();
+    claimBtn.classList.add("hidden");
+    matchInfo.classList.add("hidden");
+    document.querySelectorAll(".reel").forEach(r => r.classList.remove("win-glow","match-glow"));
+    pendingPrize = null;
+  }
+
   spinning = true;
   spins++;
+  currentSpinCreditedCoins = 0;
+  clearTimeout(resultRevealTimer);
   canRespin = false;
   hideRespinBtns();
+  claimBtn.classList.add("hidden");
   matchInfo.classList.add("hidden");
 
   systemMessage.textContent = systemMessages[Math.floor(Math.random() * systemMessages.length)];
 
   const reelEls = [0,1,2].map(i => document.getElementById(`reel${i+1}`));
   const reelBoxes = document.querySelectorAll(".reel");
+  reelBoxes.forEach(r => r.classList.remove("win-glow","match-glow"));
   reelEls.forEach(el => { el.classList.remove("landed"); el.classList.add("spinning"); });
 
   const interval = setInterval(() => {
@@ -335,7 +374,6 @@ function startSpin() {
   }, 80);
 
   // Decide final symbols
-  // Small chance of forced triple (5%), decent chance of double (30%)
   let finalSymbols;
   const luck = Math.random();
   if (luck < 0.18) {
@@ -345,16 +383,13 @@ function startSpin() {
     const s = randomSymbol();
     const pos = Math.floor(Math.random()*3);
     finalSymbols = [randomSymbol(), randomSymbol(), randomSymbol()];
-    // Force two to match
     if (pos === 0) { finalSymbols[1] = finalSymbols[0]; }
     else if (pos === 1) { finalSymbols[2] = finalSymbols[1]; }
     else { finalSymbols[2] = finalSymbols[0]; }
-    // Make sure third is different
     while(finalSymbols[0]===finalSymbols[1] && finalSymbols[1]===finalSymbols[2]) {
       finalSymbols[pos === 2 ? 1 : 2] = randomSymbol();
     }
   } else {
-    // No match — ensure all different
     finalSymbols = [randomSymbol()];
     do { finalSymbols[1] = randomSymbol(); } while(finalSymbols[1]===finalSymbols[0]);
     do { finalSymbols[2] = randomSymbol(); } while(finalSymbols[2]===finalSymbols[0] || finalSymbols[2]===finalSymbols[1]);
@@ -373,32 +408,28 @@ function startSpin() {
     }, delay);
   });
 
-  // After all stopped, evaluate
   setTimeout(() => {
     clearInterval(interval);
-    evaluateResult(finalSymbols);
+    evaluateResult(finalSymbols, false);
   }, 2400);
 }
 
 /* ========== SHOW PRIZE ========== */
-function showPrize(prize) {
+function showPrize(prize, coinAmt) {
   prizeTitle.textContent = prize.title;
   prizeIcon.textContent = prize.icon;
   prizeBody.innerHTML = prize.body;
 
-  // Rarity badge
-  const rarityLabels = { common:"Común", rare:"Especial", epic:"Épico", legendary:"Legendario" };
+  const rarityLabels = { common:"Premio jurásico", rare:"Premio especial", epic:"Premio épico" };
   prizeRarity.textContent = rarityLabels[prize.rarity] || "";
   prizeRarity.className = "prize-rarity " + (prize.rarity || "common");
 
-  // Coin reward display
-  coinReward.textContent = `+${prize._coinReward || prize.coins} DinoCoins ganadas 🪙`;
+  coinReward.textContent = `+${coinAmt} DinoCoins ganadas 🪙`;
 
   modal.classList.add("show");
   modal.setAttribute("aria-hidden","false");
 
-  if (prize.rarity === "legendary") launchConfetti(80);
-  else if (prize.rarity === "epic") launchConfetti(50);
+  if (prize.rarity === "epic") launchConfetti(60);
   else if (prize.rarity === "rare") launchConfetti(30);
   else launchConfetti(12);
 }
