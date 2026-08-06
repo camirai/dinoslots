@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#28164f" />
+  <title>DinoSlots™ para Pau</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <section id="introScreen" class="screen active">
+      <div class="arcade-card intro-card">
+        <div class="logo-mark">🦖</div>
+        <p class="eyebrow">CASINO AUTORIZADO POR EL</p>
+        <h1>DinoSlots™</h1>
+        <p class="subtitle">Ministerio Jurásico de la Felicidad</p>
+        <div class="scan-box">
+          <p>⚠ ESCANEANDO ESTADO DE ÁNIMO...</p>
+          <div class="scan-line"></div>
+          <p id="scanResult" class="scan-result">Resultado: necesita mimitos urgentemente.</p>
+        </div>
+        <button id="startBtn" class="primary-btn">COMENZAR</button>
+      </div>
+    </section>
+
+    <section id="directorScreen" class="screen">
+      <div class="arcade-card director-card">
+        <div class="director-dino">🦕</div>
+        <span class="badge">GERENTE GENERAL</span>
+        <h2>Hola, Paula.</h2>
+        <p>Soy el Director Ejecutivo del Casino Jurásico.</p>
+        <p>Hoy recibimos una solicitud muy especial presentada por una humana llamada <strong>Cami</strong>.</p>
+        <div class="request-box">
+          <span>Motivo:</span>
+          <strong>“Hacer sonreír a mi novia porque está teniendo un día difícil.”</strong>
+        </div>
+        <p>La solicitud fue aprobada por unanimidad.</p>
+        <p class="unlimited">🎰 GIROS ILIMITADOS</p>
+        <button id="enterCasinoBtn" class="primary-btn">ENTRAR AL CASINO</button>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen">
+      <div class="game-layout">
+        <header class="game-header">
+          <div>
+            <p class="mini-label">DinoSlots™</p>
+            <h2>Máquina Jurásica de Premios</h2>
+          </div>
+          <div class="coins">🪙 DINOCOINS: <span id="coinCount">0</span></div>
+        </header>
+
+        <div class="machine-wrap">
+          <div class="machine">
+            <div class="machine-top">🦖 PREMIOS PARA PAU 🦖</div>
+
+            <div class="status-panel" id="statusPanel">
+              <span id="systemMessage">Bajá la palanca para recibir un premio.</span>
+            </div>
+
+            <div class="reels">
+              <div class="reel"><div id="reel1" class="symbol">🥚</div></div>
+              <div class="reel"><div id="reel2" class="symbol">🦖</div></div>
+              <div class="reel"><div id="reel3" class="symbol">❤️</div></div>
+            </div>
+
+            <div class="machine-bottom">
+              <div class="ticket-slot"></div>
+              <p>TODOS LOS GIROS TIENEN PREMIO</p>
+            </div>
+          </div>
+
+          <div class="lever-area">
+            <div id="leverTrack" class="lever-track">
+              <button id="leverKnob" class="lever-knob" aria-label="Bajar palanca"></button>
+              <div class="lever-stick"></div>
+            </div>
+            <p>BAJÁ LA PALANCA</p>
+          </div>
+        </div>
+
+        <div id="prizeModal" class="modal" aria-hidden="true">
+          <div class="modal-card">
+            <button id="closePrizeBtn" class="close-btn" aria-label="Cerrar">×</button>
+            <div id="prizeIcon" class="prize-icon">🎁</div>
+            <h3 id="prizeTitle"></h3>
+            <div id="prizeBody" class="prize-body"></div>
+            <button id="playAgainBtn" class="primary-btn">QUIERO OTRO PREMIO</button>
+          </div>
+        </div>
+
+        <div id="secretChest" class="secret-chest hidden">
+          <p>🔓 COFRE SECRETO DESBLOQUEADO</p>
+          <button id="openChestBtn" class="secondary-btn">ABRIR COFRE</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
