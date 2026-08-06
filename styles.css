@@ -356,13 +356,6 @@ h2 { margin: 6px 0 14px; }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.result-hint {
-  margin-top: 8px;
-  text-align: center;
-  font-size: .78rem;
-  opacity: .72;
-}
-
 /* ========== LEVER ========== */
 .lever-area { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .lever-track {
@@ -587,4 +580,25 @@ h2 { margin: 6px 0 14px; }
   .reel { border-radius: 12px; }
   .machine-top { line-height: 1.5; font-size: clamp(.5rem, 1.8vw, .75rem); }
   .lever-track { height: 175px; }
+}
+
+
+/* ========== AJUSTES DE DECISIÓN Y RE-GIRO ========== */
+.respin-btn:not(.hidden) {
+  animation: fadeInUp .35s ease;
+}
+
+.respin-btn:disabled {
+  opacity: .38;
+  filter: grayscale(.45);
+}
+
+.match-info {
+  min-height: 48px;
+  display: grid;
+  place-items: center;
+}
+
+.claim-btn:not(.hidden) {
+  animation: claimPulse 1.5s ease-in-out infinite, fadeInUp .35s ease;
 }
