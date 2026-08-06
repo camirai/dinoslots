@@ -67,27 +67,29 @@ const threeMatchPrizes = [
     body:`<p>El premio más raro de la máquina:</p><p class="big-love">CARTA DE AMOR ESCRITA A MANO</p><p>Cami va a sentarse y escribirte una carta de verdad, en papel, con toda la cursilería del mundo. 💌</p>` },
 ];
 
-/* ========== COIN VALUES (fijos, siempre suben con matches) ========== */
-const COINS_NO_MATCH = 5;
+
+/* ========== ECONOMÍA DEL JUEGO ========== */
+const STARTING_COINS = 20;
+const COINS_NO_MATCH = 1;
 const COINS_TWO_MATCH = 15;
-const COINS_THREE_MATCH = 30;
-const RESPIN_COST = 30;
+const COINS_THREE_MATCH = 40;
+const RESPIN_COST = 8;
+const RESULT_REVEAL_DELAY = 2600;
 
 let spinning = false;
-let coins = 0;
+let coins = STARTING_COINS;
 let spins = 0;
-let streak = 0;
 let dragging = false;
 let startY = 0;
 let leverY = 16;
 let lastPrizeIndex = -1;
 let lastPool = null;
 let currentFinalSymbols = [];
-let canRespin = false;
 let pendingPrize = null;
-let pendingCoinReward = 0;
-let currentSpinCreditedCoins = 0;
-let resultRevealTimer = null;
+let pendingReward = 0;
+let pendingMatches = 0;
+let respinUsedThisRound = false;
+let resultControlsTimer = null;
 
 const diagBtn = document.getElementById("diagBtn");
 const diagResult = document.getElementById("diagResult");
@@ -112,10 +114,12 @@ const matchInfo = document.getElementById("matchInfo");
 const claimBtn = document.getElementById("claimBtn");
 const secretChest = document.getElementById("secretChest");
 const openChestBtn = document.getElementById("openChestBtn");
-const respinBtns = document.querySelectorAll(".respin-btn");
+const respinBtns = [...document.querySelectorAll(".respin-btn")];
+
+coinCount.textContent = coins;
 
 function showScreen(name) {
-  Object.values(screens).forEach(s => s.classList.remove("active"));
+  Object.values(screens).forEach(screen => screen.classList.remove("active"));
   screens[name].classList.add("active");
 }
 
@@ -135,299 +139,325 @@ startBtn.addEventListener("click", () => showScreen("director"));
 enterCasinoBtn.addEventListener("click", () => showScreen("game"));
 
 /* ========== HELPERS ========== */
-function randomSymbol() { return symbols[Math.floor(Math.random() * symbols.length)]; }
-function setReel(i, sym) { document.getElementById(`reel${i+1}`).textContent = sym; }
-function setReels(a,b,c) { setReel(0,a); setReel(1,b); setReel(2,c); }
+function randomSymbol() {
+  return symbols[Math.floor(Math.random() * symbols.length)];
+}
+
+function setReel(index, symbol) {
+  document.getElementById(`reel${index + 1}`).textContent = symbol;
+}
+
+function setReels(symbolsToShow) {
+  symbolsToShow.forEach((symbol, index) => setReel(index, symbol));
+}
+
+function getVisibleSymbols() {
+  return [1, 2, 3].map(index => document.getElementById(`reel${index}`).textContent);
+}
 
 function updateCoins(amount) {
   coins = Math.max(0, coins + amount);
   coinCount.textContent = coins;
-  coinsEl.classList.remove("pop","spend");
+  coinsEl.classList.remove("pop", "spend");
   void coinsEl.offsetWidth;
-  coinsEl.classList.add(amount > 0 ? "pop" : "spend");
+  coinsEl.classList.add(amount >= 0 ? "pop" : "spend");
 }
 
-function countMatches(syms) {
-  if (syms[0] === syms[1] && syms[1] === syms[2]) return 3;
-  if (syms[0] === syms[1] || syms[1] === syms[2] || syms[0] === syms[2]) return 2;
+function countMatches(symbolsToCheck) {
+  if (symbolsToCheck[0] === symbolsToCheck[1] && symbolsToCheck[1] === symbolsToCheck[2]) return 3;
+  if (
+    symbolsToCheck[0] === symbolsToCheck[1] ||
+    symbolsToCheck[1] === symbolsToCheck[2] ||
+    symbolsToCheck[0] === symbolsToCheck[2]
+  ) return 2;
   return 0;
 }
 
+function rewardForMatches(matches) {
+  if (matches === 3) return COINS_THREE_MATCH;
+  if (matches === 2) return COINS_TWO_MATCH;
+  return COINS_NO_MATCH;
+}
+
+function poolForMatches(matches) {
+  if (matches === 3) return threeMatchPrizes;
+  if (matches === 2) return twoMatchPrizes;
+  return noMatchPrizes;
+}
+
 function pickFromPool(pool) {
-  if (pool.length <= 1) return pool[0];
-  let idx, attempts = 0;
+  if (pool.length === 1) return pool[0];
+  let index;
+  let attempts = 0;
   do {
-    idx = Math.floor(Math.random() * pool.length);
-    attempts++;
-  } while (pool === lastPool && idx === lastPrizeIndex && attempts < 10);
-  lastPrizeIndex = idx;
+    index = Math.floor(Math.random() * pool.length);
+    attempts += 1;
+  } while (pool === lastPool && index === lastPrizeIndex && attempts < 10);
+  lastPrizeIndex = index;
   lastPool = pool;
-  return pool[idx];
+  return pool[index];
 }
 
-function showStreak(n) {
-  const el = document.createElement("div");
-  el.className = "streak-banner";
-  el.textContent = `🔥 ¡RACHA DE ${n}! +${n * 3} BONUS 🔥`;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 3200);
+function clearResultUI() {
+  if (resultControlsTimer) {
+    clearTimeout(resultControlsTimer);
+    resultControlsTimer = null;
+  }
+  matchInfo.classList.add("hidden");
+  claimBtn.classList.add("hidden");
+  hideRespinButtons();
+  document.querySelectorAll(".reel").forEach(reel => {
+    reel.classList.remove("win-glow", "match-glow");
+  });
 }
 
-/* ========== RESPIN ========== */
-respinBtns.forEach(btn => {
-  btn.addEventListener("click", () => {
-    if (spinning || !canRespin) return;
-    const reelIdx = parseInt(btn.dataset.reel);
+function highlightMatches(symbolsToCheck, matches) {
+  const reelBoxes = [...document.querySelectorAll(".reel")];
+  reelBoxes.forEach(reel => reel.classList.remove("win-glow", "match-glow"));
+
+  if (matches === 3) {
+    reelBoxes.forEach(reel => reel.classList.add("win-glow"));
+    return;
+  }
+
+  if (matches === 2) {
+    if (symbolsToCheck[0] === symbolsToCheck[1]) {
+      reelBoxes[0].classList.add("match-glow");
+      reelBoxes[1].classList.add("match-glow");
+    } else if (symbolsToCheck[1] === symbolsToCheck[2]) {
+      reelBoxes[1].classList.add("match-glow");
+      reelBoxes[2].classList.add("match-glow");
+    } else {
+      reelBoxes[0].classList.add("match-glow");
+      reelBoxes[2].classList.add("match-glow");
+    }
+  }
+}
+
+function oddReelIndex(symbolsToCheck) {
+  if (symbolsToCheck[0] === symbolsToCheck[1]) return 2;
+  if (symbolsToCheck[1] === symbolsToCheck[2]) return 0;
+  if (symbolsToCheck[0] === symbolsToCheck[2]) return 1;
+  return null;
+}
+
+function hideRespinButtons() {
+  respinBtns.forEach(button => button.classList.add("hidden"));
+}
+
+function showAllowedRespinButtons(matches) {
+  hideRespinButtons();
+  if (respinUsedThisRound || matches === 3) return;
+
+  const allowedIndexes = matches === 2
+    ? [oddReelIndex(currentFinalSymbols)]
+    : [0, 1, 2];
+
+  allowedIndexes.forEach(index => {
+    if (index === null) return;
+    const button = respinBtns[index];
+    button.querySelector(".respin-cost").textContent = `${RESPIN_COST}🪙`;
+    button.disabled = coins < RESPIN_COST;
+    button.classList.remove("hidden");
+  });
+}
+
+function describeResult(matches) {
+  if (matches === 3) return `🎉 ¡TRIPLE MATCH! Premio épico · +${COINS_THREE_MATCH} DinoCoins`;
+  if (matches === 2) return `✨ ¡Doble match! Premio especial · +${COINS_TWO_MATCH} DinoCoins`;
+  return `🎰 Sin match · Premio jurásico · +${COINS_NO_MATCH} DinoCoin`;
+}
+
+function setClaimButtonText(matches) {
+  claimBtn.textContent = matches === 3
+    ? "DESCUBRIR PREMIO ÉPICO 🏆"
+    : "VER MI PREMIO 🎁";
+}
+
+/* ========== EVALUACIÓN ========== */
+function prepareFinalResult(symbolsToCheck) {
+  // La fuente de verdad es exactamente lo que quedó visible en pantalla.
+  currentFinalSymbols = [...symbolsToCheck];
+  const matches = countMatches(currentFinalSymbols);
+  pendingMatches = matches;
+  pendingReward = rewardForMatches(matches);
+  pendingPrize = pickFromPool(poolForMatches(matches));
+
+  highlightMatches(currentFinalSymbols, matches);
+  systemMessage.textContent = matches === 3
+    ? "🏆 ¡¡¡TRIPLE MATCH ÉPICO!!!"
+    : matches === 2
+      ? "✨ ¡DOBLE MATCH!"
+      : "🎰 Resultado listo";
+
+  matchInfo.textContent = describeResult(matches);
+  matchInfo.classList.remove("hidden");
+
+  document.querySelector(".machine").classList.add("shake");
+  setTimeout(() => document.querySelector(".machine").classList.remove("shake"), 450);
+
+  if (navigator.vibrate) {
+    navigator.vibrate(matches === 3 ? [60, 40, 90, 40, 120] : [45, 35, 65]);
+  }
+
+  // Primero se deja ver la combinación. Recién después aparecen las decisiones.
+  resultControlsTimer = setTimeout(() => {
+    setClaimButtonText(matches);
+    claimBtn.classList.remove("hidden");
+    showAllowedRespinButtons(matches);
+
+    if (!respinUsedThisRound && matches < 3) {
+      systemMessage.textContent = coins >= RESPIN_COST
+        ? "Podés ver tu premio o pagar 8 DinoCoins para re-girar un slot."
+        : "Podés ver tu premio. Te faltan DinoCoins para un re-giro.";
+    } else {
+      systemMessage.textContent = "Este es tu resultado definitivo. Podés ver tu premio.";
+    }
+  }, RESULT_REVEAL_DELAY);
+
+  spinning = false;
+  if (spins === 5) secretChest.classList.remove("hidden");
+}
+
+/* ========== TIRADA PRINCIPAL ========== */
+function generateFinalSymbols() {
+  const chance = Math.random();
+
+  // 10% triple, 30% doble, 60% sin match.
+  if (chance < 0.10) {
+    const symbol = randomSymbol();
+    return [symbol, symbol, symbol];
+  }
+
+  if (chance < 0.40) {
+    const matchSymbol = randomSymbol();
+    let differentSymbol;
+    do { differentSymbol = randomSymbol(); } while (differentSymbol === matchSymbol);
+    const differentPosition = Math.floor(Math.random() * 3);
+    const result = [matchSymbol, matchSymbol, matchSymbol];
+    result[differentPosition] = differentSymbol;
+    return result;
+  }
+
+  const result = [randomSymbol()];
+  do { result[1] = randomSymbol(); } while (result[1] === result[0]);
+  do {
+    result[2] = randomSymbol();
+  } while (result[2] === result[0] || result[2] === result[1]);
+  return result;
+}
+
+function startSpin() {
+  if (spinning || modal.classList.contains("show") || pendingPrize) return;
+
+  spinning = true;
+  spins += 1;
+  respinUsedThisRound = false;
+  clearResultUI();
+  systemMessage.textContent = systemMessages[Math.floor(Math.random() * systemMessages.length)];
+
+  const reelElements = [1, 2, 3].map(index => document.getElementById(`reel${index}`));
+  const finalSymbols = generateFinalSymbols();
+  const intervals = [];
+
+  reelElements.forEach((element, index) => {
+    element.classList.remove("landed");
+    element.classList.add("spinning");
+    intervals[index] = setInterval(() => {
+      element.textContent = randomSymbol();
+    }, 80);
+  });
+
+  const stopDelays = [1200, 1700, 2200];
+  stopDelays.forEach((delay, index) => {
+    setTimeout(() => {
+      clearInterval(intervals[index]);
+      reelElements[index].classList.remove("spinning");
+      reelElements[index].classList.add("landed");
+      reelElements[index].textContent = finalSymbols[index];
+      if (navigator.vibrate) navigator.vibrate(25);
+
+      if (index === 2) {
+        // Se lee la pantalla después de que los tres rodillos frenaron.
+        setTimeout(() => prepareFinalResult(getVisibleSymbols()), 350);
+      }
+    }, delay);
+  });
+}
+
+/* ========== RE-GIRO INDIVIDUAL ========== */
+respinBtns.forEach(button => {
+  button.addEventListener("click", () => {
+    if (spinning || respinUsedThisRound || !pendingPrize) return;
     if (coins < RESPIN_COST) {
-      systemMessage.textContent = `¡Necesitás ${RESPIN_COST} DinoCoins! Seguí girando.`;
+      systemMessage.textContent = `Necesitás ${RESPIN_COST} DinoCoins para re-girar.`;
       return;
     }
 
+    const reelIndex = Number(button.dataset.reel);
     updateCoins(-RESPIN_COST);
-    canRespin = false;
-    hideRespinBtns();
-    claimBtn.classList.add("hidden");
-    matchInfo.classList.add("hidden");
+    respinUsedThisRound = true;
+    pendingPrize = null;
+    pendingReward = 0;
+    pendingMatches = 0;
+    spinning = true;
+    clearResultUI();
+    systemMessage.textContent = `Re-girando el slot ${reelIndex + 1}...`;
 
-    const reelEl = document.getElementById(`reel${reelIdx+1}`);
-    reelEl.classList.add("spinning");
-    systemMessage.textContent = "Re-girando...";
+    const reelElement = document.getElementById(`reel${reelIndex + 1}`);
+    reelElement.classList.remove("landed");
+    reelElement.classList.add("spinning");
 
     const interval = setInterval(() => {
-      reelEl.textContent = randomSymbol();
+      reelElement.textContent = randomSymbol();
     }, 80);
 
     setTimeout(() => {
       clearInterval(interval);
-      const newSym = randomSymbol();
-      currentFinalSymbols[reelIdx] = newSym;
-      reelEl.textContent = newSym;
-      reelEl.classList.remove("spinning");
-      reelEl.classList.add("landed");
+      const newSymbol = randomSymbol();
+      reelElement.textContent = newSymbol;
+      reelElement.classList.remove("spinning");
+      reelElement.classList.add("landed");
       if (navigator.vibrate) navigator.vibrate(30);
 
-      setTimeout(() => evaluateResult(currentFinalSymbols, true), 600);
-    }, 1000);
+      setTimeout(() => prepareFinalResult(getVisibleSymbols()), 500);
+    }, 1200);
   });
 });
 
-function showRespinBtns() {
-  if (coins < RESPIN_COST) return;
-  canRespin = true;
-  respinBtns.forEach(btn => {
-    btn.classList.remove("hidden");
-    btn.querySelector(".respin-cost").textContent = `${RESPIN_COST}🪙`;
-    btn.disabled = coins < RESPIN_COST;
-  });
-}
-
-function hideRespinBtns() {
-  canRespin = false;
-  respinBtns.forEach(btn => btn.classList.add("hidden"));
-}
-
-/* ========== EVALUATE RESULT ========== */
-function evaluateResult(syms, isRespin) {
-  const matches = countMatches(syms);
-  const reelBoxes = document.querySelectorAll(".reel");
-
-  // Recompensa fija y ordenada: 3 iguales > 2 iguales > todos distintos.
-  let baseCoins;
-  if (matches === 3) baseCoins = COINS_THREE_MATCH;
-  else if (matches === 2) baseCoins = COINS_TWO_MATCH;
-  else baseCoins = COINS_NO_MATCH;
-
-  // La racha se calcula una sola vez por tirada completa, no al re-girar.
-  let bonusCoins = 0;
-  if (!isRespin) {
-    if (matches >= 2) {
-      streak++;
-      if (streak >= 3) {
-        bonusCoins = streak * 3;
-        showStreak(streak);
-      }
-    } else {
-      streak = 0;
-    }
-  }
-
-  const totalForResult = baseCoins + bonusCoins;
-
-  // Evita contar dos veces al usar re-giro.
-  // Solo acredita la diferencia si el nuevo resultado mejora el premio.
-  const coinDelta = Math.max(0, totalForResult - currentSpinCreditedCoins);
-  if (coinDelta > 0) {
-    updateCoins(coinDelta);
-    currentSpinCreditedCoins += coinDelta;
-  }
-
-  // Resalta los slots que coinciden.
-  reelBoxes.forEach(r => r.classList.remove("win-glow","match-glow"));
-  if (matches === 3) {
-    reelBoxes.forEach(r => r.classList.add("win-glow"));
-  } else if (matches === 2) {
-    if (syms[0]===syms[1]) { reelBoxes[0].classList.add("match-glow"); reelBoxes[1].classList.add("match-glow"); }
-    if (syms[1]===syms[2]) { reelBoxes[1].classList.add("match-glow"); reelBoxes[2].classList.add("match-glow"); }
-    if (syms[0]===syms[2]) { reelBoxes[0].classList.add("match-glow"); reelBoxes[2].classList.add("match-glow"); }
-  }
-
-  // El premio épico existe únicamente cuando los tres slots coinciden.
-  let prize;
-  if (matches === 3) {
-    prize = pickFromPool(threeMatchPrizes);
-  } else if (matches === 2) {
-    prize = pickFromPool(twoMatchPrizes);
-  } else {
-    prize = pickFromPool(noMatchPrizes);
-  }
-
-  pendingPrize = prize;
-  pendingCoinReward = currentSpinCreditedCoins;
-
-  // Primero se deja el resultado visible para que Pau pueda mirar qué salió.
-  matchInfo.classList.add("hidden");
-  claimBtn.classList.add("hidden");
-  hideRespinBtns();
-
-  if (matches === 3) {
-    systemMessage.textContent = "🏆 ¡TRES IGUALES! PREMIO ÉPICO 🏆";
-  } else if (matches === 2) {
-    systemMessage.textContent = "✨ ¡DOS IGUALES! PREMIO ESPECIAL ✨";
-  } else {
-    systemMessage.textContent = "🎰 Resultado listo...";
-  }
-
-  document.querySelector(".machine").classList.add("shake");
-  setTimeout(() => document.querySelector(".machine").classList.remove("shake"), 450);
-  if (navigator.vibrate) {
-    navigator.vibrate(matches === 3 ? [60,40,90,40,120] : [60,40,90]);
-  }
-
-  // Pausa deliberada antes de mostrar las opciones.
-  clearTimeout(resultRevealTimer);
-  resultRevealTimer = setTimeout(() => {
-    if (matches === 3) {
-      matchInfo.textContent = `🎉 ¡TRIPLE MATCH! Premio épico · +${currentSpinCreditedCoins} DinoCoins`;
-    } else if (matches === 2) {
-      matchInfo.textContent = `✨ ¡Doble match! Premio especial · +${currentSpinCreditedCoins} DinoCoins`;
-    } else {
-      matchInfo.textContent = coins >= RESPIN_COST
-        ? `🎰 Todos distintos · +${currentSpinCreditedCoins} DinoCoins. Podés re-girar un slot o ver tu premio.`
-        : `🎰 Todos distintos · +${currentSpinCreditedCoins} DinoCoins. Tu premio está listo.`;
-    }
-
-    matchInfo.classList.remove("hidden");
-
-    if (matches === 0) {
-      showRespinBtns();
-    }
-
-    claimBtn.classList.remove("hidden");
-    systemMessage.textContent = "Tomate tu tiempo: mirá el resultado y elegí qué hacer.";
-  }, 2600);
-
-  if (spins === 5) secretChest.classList.remove("hidden");
-  spinning = false;
-}
-
-/* ========== CLAIM PRIZE (manual) ========== */
+/* ========== COBRAR PREMIO ========== */
 claimBtn.addEventListener("click", () => {
-  if (!pendingPrize) return;
-  hideRespinBtns();
+  if (!pendingPrize || spinning) return;
+
+  const prizeToShow = pendingPrize;
+  const rewardToCredit = pendingReward;
+  pendingPrize = null;
+  pendingReward = 0;
+  hideRespinButtons();
   claimBtn.classList.add("hidden");
   matchInfo.classList.add("hidden");
-  document.querySelectorAll(".reel").forEach(r => r.classList.remove("win-glow","match-glow"));
-  showPrize(pendingPrize, pendingCoinReward);
-  pendingPrize = null;
+
+  // Las monedas se acreditan una sola vez y según el resultado definitivo.
+  updateCoins(rewardToCredit);
+  showPrize(prizeToShow, rewardToCredit);
 });
 
-/* ========== SPIN ========== */
-function startSpin() {
-  if (spinning || modal.classList.contains("show")) return;
-  // If there's a pending prize, auto-claim it first
-  if (pendingPrize) {
-    hideRespinBtns();
-    claimBtn.classList.add("hidden");
-    matchInfo.classList.add("hidden");
-    document.querySelectorAll(".reel").forEach(r => r.classList.remove("win-glow","match-glow"));
-    pendingPrize = null;
-  }
-
-  spinning = true;
-  spins++;
-  currentSpinCreditedCoins = 0;
-  clearTimeout(resultRevealTimer);
-  canRespin = false;
-  hideRespinBtns();
-  claimBtn.classList.add("hidden");
-  matchInfo.classList.add("hidden");
-
-  systemMessage.textContent = systemMessages[Math.floor(Math.random() * systemMessages.length)];
-
-  const reelEls = [0,1,2].map(i => document.getElementById(`reel${i+1}`));
-  const reelBoxes = document.querySelectorAll(".reel");
-  reelBoxes.forEach(r => r.classList.remove("win-glow","match-glow"));
-  reelEls.forEach(el => { el.classList.remove("landed"); el.classList.add("spinning"); });
-
-  const interval = setInterval(() => {
-    setReels(randomSymbol(), randomSymbol(), randomSymbol());
-  }, 80);
-
-  // Decide final symbols
-  let finalSymbols;
-  const luck = Math.random();
-  if (luck < 0.18) {
-    const s = randomSymbol();
-    finalSymbols = [s, s, s];
-  } else if (luck < 0.50) {
-    const s = randomSymbol();
-    const pos = Math.floor(Math.random()*3);
-    finalSymbols = [randomSymbol(), randomSymbol(), randomSymbol()];
-    if (pos === 0) { finalSymbols[1] = finalSymbols[0]; }
-    else if (pos === 1) { finalSymbols[2] = finalSymbols[1]; }
-    else { finalSymbols[2] = finalSymbols[0]; }
-    while(finalSymbols[0]===finalSymbols[1] && finalSymbols[1]===finalSymbols[2]) {
-      finalSymbols[pos === 2 ? 1 : 2] = randomSymbol();
-    }
-  } else {
-    finalSymbols = [randomSymbol()];
-    do { finalSymbols[1] = randomSymbol(); } while(finalSymbols[1]===finalSymbols[0]);
-    do { finalSymbols[2] = randomSymbol(); } while(finalSymbols[2]===finalSymbols[0] || finalSymbols[2]===finalSymbols[1]);
-  }
-
-  currentFinalSymbols = [...finalSymbols];
-
-  // Stop reels one by one
-  const stopDelays = [1200, 1700, 2200];
-  stopDelays.forEach((delay, i) => {
-    setTimeout(() => {
-      reelEls[i].classList.remove("spinning");
-      reelEls[i].classList.add("landed");
-      reelEls[i].textContent = finalSymbols[i];
-      if (navigator.vibrate) navigator.vibrate(30);
-    }, delay);
-  });
-
-  setTimeout(() => {
-    clearInterval(interval);
-    evaluateResult(finalSymbols, false);
-  }, 2400);
-}
-
-/* ========== SHOW PRIZE ========== */
-function showPrize(prize, coinAmt) {
+function showPrize(prize, coinAmount) {
   prizeTitle.textContent = prize.title;
   prizeIcon.textContent = prize.icon;
   prizeBody.innerHTML = prize.body;
 
-  const rarityLabels = { common:"Premio jurásico", rare:"Premio especial", epic:"Premio épico" };
+  const rarityLabels = {
+    common: "Jurásico",
+    rare: "Especial",
+    epic: "Épico",
+  };
   prizeRarity.textContent = rarityLabels[prize.rarity] || "";
-  prizeRarity.className = "prize-rarity " + (prize.rarity || "common");
-
-  coinReward.textContent = `+${coinAmt} DinoCoins ganadas 🪙`;
+  prizeRarity.className = `prize-rarity ${prize.rarity || "common"}`;
+  coinReward.textContent = `+${coinAmount} ${coinAmount === 1 ? "DinoCoin ganada" : "DinoCoins ganadas"} 🪙`;
 
   modal.classList.add("show");
-  modal.setAttribute("aria-hidden","false");
+  modal.setAttribute("aria-hidden", "false");
 
   if (prize.rarity === "epic") launchConfetti(60);
   else if (prize.rarity === "rare") launchConfetti(30);
@@ -436,28 +466,39 @@ function showPrize(prize, coinAmt) {
 
 function closePrize() {
   modal.classList.remove("show");
-  modal.setAttribute("aria-hidden","true");
+  modal.setAttribute("aria-hidden", "true");
+  document.querySelectorAll(".reel").forEach(reel => {
+    reel.classList.remove("win-glow", "match-glow");
+  });
   systemMessage.textContent = "Bajá la palanca para recibir otro premio.";
 }
 
 closePrizeBtn.addEventListener("click", closePrize);
 playAgainBtn.addEventListener("click", closePrize);
-modal.addEventListener("click", (e) => { if (e.target === modal) closePrize(); });
+modal.addEventListener("click", event => {
+  if (event.target === modal) closePrize();
+});
 
-/* ========== LEVER ========== */
+/* ========== PALANCA ========== */
 function updateLever(y) {
   const min = 16;
   const max = leverTrack.clientHeight - leverKnob.offsetHeight - 16;
   leverY = Math.max(min, Math.min(max, y));
   leverKnob.style.top = `${leverY}px`;
 }
+
 function beginDrag(clientY) {
-  if (spinning) return;
+  if (spinning || pendingPrize) return;
   dragging = true;
   startY = clientY - leverY;
   leverKnob.classList.add("dragging");
 }
-function moveDrag(clientY) { if (!dragging) return; updateLever(clientY - startY); }
+
+function moveDrag(clientY) {
+  if (!dragging) return;
+  updateLever(clientY - startY);
+}
+
 function endDrag() {
   if (!dragging) return;
   dragging = false;
@@ -466,38 +507,36 @@ function endDrag() {
   const triggered = leverY >= threshold;
   leverKnob.style.transition = "top .28s ease";
   updateLever(16);
-  setTimeout(() => leverKnob.style.transition = "", 300);
+  setTimeout(() => { leverKnob.style.transition = ""; }, 300);
   if (triggered) startSpin();
 }
 
-leverKnob.addEventListener("pointerdown", (e) => {
-  leverKnob.setPointerCapture(e.pointerId);
-  beginDrag(e.clientY);
+leverKnob.addEventListener("pointerdown", event => {
+  leverKnob.setPointerCapture(event.pointerId);
+  beginDrag(event.clientY);
 });
-leverKnob.addEventListener("pointermove", (e) => moveDrag(e.clientY));
+leverKnob.addEventListener("pointermove", event => moveDrag(event.clientY));
 leverKnob.addEventListener("pointerup", endDrag);
 leverKnob.addEventListener("pointercancel", endDrag);
 
-leverTrack.addEventListener("click", (e) => {
-  if (e.target !== leverKnob && !spinning) {
-    leverKnob.style.transition = "top .24s ease";
-    updateLever(leverTrack.clientHeight - leverKnob.offsetHeight - 16);
-    setTimeout(() => {
-      updateLever(16);
-      startSpin();
-      setTimeout(() => leverKnob.style.transition = "", 300);
-    }, 250);
-  }
+leverTrack.addEventListener("click", event => {
+  if (event.target === leverKnob || spinning || pendingPrize) return;
+  leverKnob.style.transition = "top .24s ease";
+  updateLever(leverTrack.clientHeight - leverKnob.offsetHeight - 16);
+  setTimeout(() => {
+    updateLever(16);
+    startSpin();
+    setTimeout(() => { leverKnob.style.transition = ""; }, 300);
+  }, 250);
 });
 
-/* ========== SECRET CHEST ========== */
+/* ========== COFRE SECRETO ========== */
 openChestBtn.addEventListener("click", () => {
   prizeTitle.textContent = "COFRE SECRETO";
   prizeIcon.textContent = "💌🦖";
-  prizeRarity.textContent = "Legendario";
-  prizeRarity.className = "prize-rarity legendary";
-  coinReward.textContent = "+50 DinoCoins 🪙";
-  updateCoins(50);
+  prizeRarity.textContent = "Secreto";
+  prizeRarity.className = "prize-rarity epic";
+  coinReward.textContent = "Un mensaje reservado para Pau ❤️";
   prizeBody.innerHTML = `
     <p>La máquina encontró un mensaje reservado exclusivamente para Pau.</p>
     <p class="big-love">No puedo hacer que todos los días sean fáciles, pero sí intentar que hoy termine con una sonrisa.</p>
@@ -505,35 +544,36 @@ openChestBtn.addEventListener("click", () => {
     <p><strong>— Cami 🦖❤️</strong></p>
   `;
   modal.classList.add("show");
+  modal.setAttribute("aria-hidden", "false");
   launchConfetti(60);
 });
 
 /* ========== CONFETTI ========== */
 function launchConfetti(amount) {
-  const pieces = ["❤️","✨","🦖","💛","💖","🦕","⭐","🪙"];
-  for (let i = 0; i < amount; i++) {
-    const el = document.createElement("span");
-    el.className = "confetti";
-    el.textContent = pieces[Math.floor(Math.random() * pieces.length)];
-    el.style.left = `${Math.random() * 100}vw`;
-    el.style.animationDuration = `${2.5 + Math.random() * 2.8}s`;
-    el.style.fontSize = `${14 + Math.random() * 22}px`;
-    el.style.animationDelay = `${Math.random() * 0.5}s`;
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 6000);
+  const pieces = ["❤️", "✨", "🦖", "💛", "💖", "🦕", "⭐", "🪙"];
+  for (let i = 0; i < amount; i += 1) {
+    const element = document.createElement("span");
+    element.className = "confetti";
+    element.textContent = pieces[Math.floor(Math.random() * pieces.length)];
+    element.style.left = `${Math.random() * 100}vw`;
+    element.style.animationDuration = `${2.5 + Math.random() * 2.8}s`;
+    element.style.fontSize = `${14 + Math.random() * 22}px`;
+    element.style.animationDelay = `${Math.random() * 0.5}s`;
+    document.body.appendChild(element);
+    setTimeout(() => element.remove(), 6000);
   }
 }
 
-/* ========== AMBIENT ========== */
+/* ========== BRILLOS AMBIENTALES ========== */
 function spawnSparkle() {
-  const el = document.createElement("span");
-  el.className = "confetti";
-  el.textContent = "✨";
-  el.style.left = `${Math.random() * 100}vw`;
-  el.style.animationDuration = `${4 + Math.random() * 3}s`;
-  el.style.fontSize = "10px";
-  el.style.opacity = "0.4";
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 7000);
+  const element = document.createElement("span");
+  element.className = "confetti";
+  element.textContent = "✨";
+  element.style.left = `${Math.random() * 100}vw`;
+  element.style.animationDuration = `${4 + Math.random() * 3}s`;
+  element.style.fontSize = "10px";
+  element.style.opacity = "0.4";
+  document.body.appendChild(element);
+  setTimeout(() => element.remove(), 7000);
 }
 setInterval(spawnSparkle, 3000);
