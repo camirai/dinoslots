@@ -54,7 +54,7 @@
             <p class="mini-label">DinoSlots™</p>
             <h2>Máquina Jurásica de Premios</h2>
           </div>
-          <div class="coins">🪙 DINOCOINS: <span id="coinCount">0</span></div>
+          <div class="coins" id="coinsDisplay">🪙 <span id="coinCount">0</span></div>
         </header>
 
         <div class="machine-wrap">
@@ -70,9 +70,18 @@
             </div>
 
             <div class="reels">
-              <div class="reel"><div id="reel1" class="symbol">🥚</div></div>
-              <div class="reel"><div id="reel2" class="symbol">🦖</div></div>
-              <div class="reel"><div id="reel3" class="symbol">❤️</div></div>
+              <div class="reel-col">
+                <div class="reel"><div id="reel1" class="symbol">🥚</div></div>
+                <button class="respin-btn hidden" data-reel="0" aria-label="Re-girar slot 1">🔄 <span class="respin-cost"></span></button>
+              </div>
+              <div class="reel-col">
+                <div class="reel"><div id="reel2" class="symbol">🦖</div></div>
+                <button class="respin-btn hidden" data-reel="1" aria-label="Re-girar slot 2">🔄 <span class="respin-cost"></span></button>
+              </div>
+              <div class="reel-col">
+                <div class="reel"><div id="reel3" class="symbol">❤️</div></div>
+                <button class="respin-btn hidden" data-reel="2" aria-label="Re-girar slot 3">🔄 <span class="respin-cost"></span></button>
+              </div>
             </div>
 
             <div class="machine-bottom">
@@ -90,12 +99,16 @@
           </div>
         </div>
 
+        <div id="matchInfo" class="match-info hidden"></div>
+
         <div id="prizeModal" class="modal" aria-hidden="true">
           <div class="modal-card">
             <button id="closePrizeBtn" class="close-btn" aria-label="Cerrar">×</button>
+            <div id="prizeRarity" class="prize-rarity"></div>
             <div id="prizeIcon" class="prize-icon">🎁</div>
             <h3 id="prizeTitle"></h3>
             <div id="prizeBody" class="prize-body"></div>
+            <div id="coinReward" class="coin-reward"></div>
             <button id="playAgainBtn" class="primary-btn">QUIERO OTRO PREMIO</button>
           </div>
         </div>
